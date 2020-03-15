@@ -1,29 +1,18 @@
 from enum import Enum
-
+import constant
 
 class KermitPacket:
-    class PACKET_TYPE(Enum):
-        D = "D" #"Data Packet"
-        Y = "Y" #"Acknowledge"
-        N = "N" #"Negative Acknowledge"
-        S = "S" #"Send Initiate"
-        B = "B" #"Break Transmision"
-        F = "F" #"File Header"
-        Z = "Z" #"End OF File"
-        E = "E" #"Error"
-        Q = "Q" #"Undefined"
-        T = "T" #"Undefined"
-
-    class ACKNOWLEDGE_TYPE(Enum):
-        G = "G" #GOOD
-        B = "B" #BAD
-
+    
     def __init__(self, type):
         self.type = type
         self.packet_number = -1;
+        self.states  = {
+            constant.SENDSTATE.S : (constant.SENDSTATE.SF,constant.SENDSTATE.SF)
+        }
 
     def get_packet(self,packet_type,data)->str:
-        packet = str(self.ctl(1))
+        self.packet_number += 1;
+        packet = str(self.tochar(self.ctl(1)))
         middle_packet = str(self.tochar((self.packet_number % 64))) + (str(packet_type)) + str(data)
         check = str(self.check_sum(middle_packet))
         middle_packet += check
@@ -32,9 +21,21 @@ class KermitPacket:
         return packet
 
     def parse(self,packet):
-        base_type  = packet[:1]
-        base_type = self.unchar(base_type)
-        pass
+        packet = constant.packet
+        
+        packet["MARK"] = self.unctl(self.tochar(packet[:1]))
+        packet["LEN"] = self.unctl(self.tochar(packet[1:2]))
+        packet["SEQ"] = self.unctl(self.tochar(packet[2:3]))
+        packet["TYPE"] = self.unctl(self.tochar(packet[3:4]))
+        packet["DATA"]  = self.unctl(self.tochar(packet[4:packet["LEN"]-1]))
+        packet["CHECK"] = self.unctl(self.tochar(packet[packet["LEN"]-1:packet["LEN"]]))
+        packet["CORRECT"] = self.check(packet[1:packet["LEN"]-1])
+        return packet
+    
+    def parse_data(self,data_type):
+        if data_type == constant.DATA_TYPE.P:
+            pass
+
     #util functions
     def tochar(self, x):
         x = x + 32
@@ -65,3 +66,8 @@ class KermitPacket:
         check = ((s + ((s & 192)/64)) & 63)
         check = self.tochar(check)
         return check
+
+    def check(self,string,expected_sum)->bool:
+        current_sum = self.check_sum(string)
+
+        return current_sum == expected_sum

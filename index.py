@@ -15,7 +15,7 @@ activate_connection = True
 kermit = KermitProtocol.KermitProtocol(1,client_socket)
 count  = 0;
 while activate_connection:
-    kermit.s_send();
+    kermit.kermit();
     data = client_socket.recv(1024)
     print(data)
     #count += 1;
