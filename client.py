@@ -1,4 +1,5 @@
 import socket
+import KermitProtocol
 
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serversocket.connect(('DESKTOP-E844T7N', 6000))
@@ -9,6 +10,8 @@ kermit = KermitProtocol.KermitProtocol(0,serversocket)
 
 while True:
     data = serversocket.recv(1024)
-    kermit.dispatcher(data)
+    print("pass")
     print(data.decode('utf-8'))
-    serversocket.send(b"received!!!!!!!!!!!!!")
+    kermit.receiver(data)
+    serversocket.close()
+

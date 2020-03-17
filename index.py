@@ -14,11 +14,16 @@ print("address " + str(address) +"\n")
 activate_connection = True
 kermit = KermitProtocol.KermitProtocol(1,client_socket)
 count  = 0;
+
 while activate_connection:
-    kermit.kermit();
+    print("BUFF SIZE\n")
+    print(kermit.params["MAXL"])
     data = client_socket.recv(1024)
+    kermit.ack_receiver(data)
     print(data)
     #count += 1;
     #str_to_send = "packet # " + str(count) +"\n"
     #byte = str_to_send.encode();
     #client_socket.sendall(byte);
+    client_socket.close()
+    client_socket.shutdown()

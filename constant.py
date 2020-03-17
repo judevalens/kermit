@@ -1,3 +1,5 @@
+from enum import Enum
+
 class PACKET_TYPE(Enum):
     D = "D" #"Data Packet"
     Y = "Y" #"Acknowledge"
@@ -32,7 +34,6 @@ class DATA_TYPE(Enum):
     R = "R" #Raw file data
     A = "A" #File Attributes
     F = "F" #File Header
-    pass
 
 packet = {
     "MARK":None,
@@ -43,3 +44,18 @@ packet = {
     "CHECK":None,
     "correct": None
 }
+
+
+params = {
+    "MAXL": None,
+    "TIME": None,
+    "NPAD": None,
+    "PADC": None,
+    # EOL = ^M
+    "EOL": None,
+    "QCTL": None,
+    "QBIN": None,
+    "CHKT": None,
+    "RPT": None,
+    "CAPAS": None
+        }
