@@ -25,5 +25,6 @@ while activate_connection:
     #str_to_send = "packet # " + str(count) +"\n"
     #byte = str_to_send.encode();
     #client_socket.sendall(byte);
+    client_socket.shutdown(socket.SHUT_WR)
     client_socket.close()
-    client_socket.shutdown()
+    activate_connection = False

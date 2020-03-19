@@ -42,7 +42,7 @@ packet = {
     "TYPE": None,
     "DATA":None,
     "CHECK":None,
-    "correct": None
+    "CORRECT3": None
 }
 
 

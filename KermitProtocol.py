@@ -103,11 +103,12 @@ class KermitProtocol:
         if self.current_state == constant.RECEIVESTATE.C:
             print("DONE")
 
-    def ack_receiver(self, ack) -> None:
+    def ack_receiver(self: object, ack: str) -> None:
         """
         Receive an acknowledgement packet from the receiver and call the s_transit with the approriate input.
 
         Parameters:
+
             ack (str): represents a packet.
         """
         print("ACK")
@@ -117,22 +118,34 @@ class KermitProtocol:
         if packet["CORRECT"] == True:
             if packet["TYPE"] == constant.PACKET_TYPE.S.name:
                 self.params = self.kermit_packet.parse_data(
-                    packet["DATA"], constant.PACKET_TYPE.P.name)
+                    packet["DATA"], constant.DATA_TYPE.P.name)
                 result = 1
             elif packet["TYPE"] == constant.PACKET_TYPE.Y.name:
                 result = 1
             else:
                 result = 0
         print("P LAST")
-        #self.s_transit(result)
+        self.s_transit(result)
 
     def receiver(self, _packet):
         packet = self.kermit_packet.parse_packet(_packet)
-        packet_data = self.kermit_packet.parse_data(packet["TYPE"],packet["DATA"])
+        packet_data = self.kermit_packet.parse_data(
+            packet["TYPE"], packet["DATA"])
+        r_packet = {}
+        if packet["CORRECT"] == True:
+            if packet["TYPE"] == constant.PACKET_TYPE.S.name:
+                # I should be comparing the data and adjust them them | going to use the defaut params instead :) i will fix that
+                if packet["TYPE"] == constant.PACKET_TYPE.S.name:
+                    r_packet = self.kermit_packet.get_packet(
+                        constant.PACKET_TYPE.S.name, self.send_init_params)
+        else:
+            r_packet = self.kermit_packet.get_packet(constant.PACKET_TYPE.N,"")
+        self.socket.sendall(r_packet.encode())
+                    
+
         print(str(packet))
         print("packet_data")
         print(str(packet_data))
-        
 
     def tochar(self, n):
         if isinstance(n, int) == True:
@@ -141,7 +154,7 @@ class KermitProtocol:
         return n
 
     def unchar(self, c):
-        if isinstance(c,str) == True:
+        if isinstance(c, str) == True:
             c = ord(c)
             c = c - 32
         return c

@@ -3,7 +3,6 @@ import KermitProtocol
 
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serversocket.connect(('DESKTOP-E844T7N', 6000))
-serversocket.send(b"start !!!!!!!!!!!! !")
 
 kermit = KermitProtocol.KermitProtocol(0,serversocket)
 

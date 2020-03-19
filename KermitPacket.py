@@ -21,12 +21,11 @@ class KermitPacket:
         middle_packet_len = str(self.tochar(len(middle_packet)+1))
         middle_packet = middle_packet_len + middle_packet
 
-    
+
         check = self.check_sum(middle_packet)
         print("CHECK ")
         print(check)
-        t = self.tochar(check)
-        print(t)
+        
         middle_packet += str(self.tochar(check))
         packet += middle_packet
         return packet
@@ -35,20 +34,20 @@ class KermitPacket:
         packet = constant.packet
         _packet = _packet.decode()
         p_len = len(_packet)
-        #print("PARSING \n")
-        # print(_packet)
         packet["MARK"] =_packet[:1]
         packet["LEN"] = _packet[1:2]
         packet["SEQ"] = _packet[2:3]
         packet["TYPE"] = _packet[3:4]
         packet["DATA"] = _packet[4:p_len-1]
         packet["CHECK"] =_packet[p_len-1:p_len]
-        print("DATA")
-        print(_packet[1:(p_len-1)])
         packet["CORRECT"] = self.check((_packet[1:(p_len-1)]), self.unchar(packet["CHECK"]))
         return packet
 
     def parse_data(self, data_type, _data):
+        """
+        parse the data field in a kermit packet
+        
+        """
         data = {}
         if data_type == constant.PACKET_TYPE.S.name:
             data = constant.params
