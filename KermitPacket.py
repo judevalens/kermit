@@ -1,62 +1,113 @@
 from enum import Enum
 import constant
-
+import os
 
 class KermitPacket:
 
-    def __init__(self, type):
+    def __init__(self, type: int, protocol, file_name: str = None):
         self.type = type
         self.packet_number = -1
-        self.states = {
-            constant.SENDSTATE.S: (constant.SENDSTATE.SF,
-                                   constant.SENDSTATE.SF)
-        }
-
-    def get_packet(self, packet_type, data) -> str:
-        self.packet_number += 1
-        packet = str(self.tochar(self.ctl(1)))
-
-        middle_packet = str(self.tochar((self.packet_number % 64))) + (str(packet_type)) + str(data)
-
-        middle_packet_len = str(self.tochar(len(middle_packet)+1))
-        middle_packet = middle_packet_len + middle_packet
-
-
-        check = self.check_sum(middle_packet)
-        print("CHECK ")
-        print(check)
+        self.k_protocol = protocol;
+        self.file_info  = constant.file_info
+        self.chunk = None
+        self.packet = None
         
-        middle_packet += str(self.tochar(check))
-        packet += middle_packet
-        return packet
+    def get_packet(self, packet_type, data) -> str:
+
+        if data == -1:
+            return data
+        
+        if (self.k_protocol.state_input == 1) or (self.packet == None):
+
+            self.packet_number += 1
+            
+            self.packet = str(self.tochar(self.ctl(1)))
+
+            middle_packet = str(self.tochar((self.packet_number % 64))) + (str(packet_type)) + str(data)
+
+            middle_packet_len = str(self.tochar(len(middle_packet)+1))
+            middle_packet = middle_packet_len + middle_packet
+
+            check = self.check_sum(middle_packet)
+            print("CHECK ")
+            print(check)
+            
+            middle_packet += str(self.tochar(check))
+            self.packet += middle_packet
+
+        return self.packet
 
     def parse_packet(self, _packet: bytes):
         packet = constant.packet
         _packet = _packet.decode()
+        print("----------------PACKET PARSING------------")
+        print(_packet)
         p_len = len(_packet)
-        packet["MARK"] =_packet[:1]
-        packet["LEN"] = _packet[1:2]
-        packet["SEQ"] = _packet[2:3]
+        packet["MARK"] = _packet[:1]
+        packet["LEN"] = self.unchar(_packet[1:2])
+        packet["SEQ"] = self.unchar(_packet[2:3])
         packet["TYPE"] = _packet[3:4]
         packet["DATA"] = _packet[4:p_len-1]
-        packet["CHECK"] =_packet[p_len-1:p_len]
-        packet["CORRECT"] = self.check((_packet[1:(p_len-1)]), self.unchar(packet["CHECK"]))
+        packet["CHECK"] =self.unchar(_packet[p_len-1:p_len])
+        packet["CORRECT"] = self.check((_packet[1:(p_len-1)]), packet["CHECK"])
         return packet
 
-    def parse_data(self, data_type, _data):
+    def parse_data(self, packet_type, _data):
         """
         parse the data field in a kermit packet
         
         """
         data = {}
-        if data_type == constant.PACKET_TYPE.S.name:
-            data = constant.params
-            i = 0
-            for f in data:
-                data[f] = _data[i]
-                i += 1
+        if packet_type == constant.PACKET_TYPE.S.name:
+            data = constant.params                        
+            data = {
+            "MAXL": self.unchar(_data[0:1]),
+            "TIME": self.unchar(_data[1:2]),
+            "NPAD": self.unchar(_data[2:3]),
+            "PADC": self.unchar(_data[3:4]),
+            # EOL = ^M
+            "EOL": self.unchar(_data[4:5]),
+            "QCTL": _data[5:6],
+            "QBIN": _data[6:7],
+            "CHKT": self.unchar(_data[7:8]),
+            "RPT": self.unchar(_data[8:9]),
+            "CAPAS": self.unchar(_data[9:10])
+        }
+
         return data
 
+    def open_file(self,file_name):
+        self.file  = open(file_name, "br")
+        print("FIRST OPEN")
+        print(self.file.read(int(self.k_protocol.params["MAXL"])-5))
+        
+        file_stats = os.stat(file_name)
+        self.file_info['file_name'] = file_name
+        self.file_info['file_size'] = file_stats.st_size
+    
+    def chunk_file(self,packet_type):
+        if self.chunk == None or self.k_protocol.state_input != 0:
+            if packet_type == constant.PACKET_TYPE.F.name:
+                self.chunk = self.file_info["file_name"]
+            elif packet_type == constant.PACKET_TYPE.D.name:
+                self.chunk = self.file.read(int(self.k_protocol.params["MAXL"])-5)
+                chunk_length = len(self.chunk)
+
+                if chunk_length == 0:
+                    self.chunk = -1
+                    print("EOF")
+                    self.k_protocol.socket.close()
+        return self.chunk
+    
+    def write_file(self,packet_type,file_data):
+        if packet_type == constant.PACKET_TYPE.F.name:
+            self.file_info["file_name"] = file_data
+            self.file = open("b"+self.file_info["file_name"], "wb")
+        elif packet_type == constant.PACKET_TYPE.D.name:
+            self.file.write(file_data)
+        elif packet_type == constant.PACKET_TYPE.Z.name:
+            self.file.close()
+    
     # util functions
     def tochar(self, n) -> str:
         x = n
@@ -72,8 +123,11 @@ class KermitPacket:
         return c
 
     def ctl(self, x) -> str:
-        x = x + 64
-        return chr(x)
+        n = x
+        if n <= 32:
+            n = n + 64
+            n =  chr(n)
+        return n
 
     def unctl(self, x) -> int:
         x = ord(x) - 64

@@ -13,6 +13,7 @@ print("address " + str(address) +"\n")
 
 activate_connection = True
 kermit = KermitProtocol.KermitProtocol(1,client_socket)
+kermit.open_file("d.txt")
 count  = 0;
 
 while activate_connection:
@@ -25,6 +26,6 @@ while activate_connection:
     #str_to_send = "packet # " + str(count) +"\n"
     #byte = str_to_send.encode();
     #client_socket.sendall(byte);
-    client_socket.shutdown(socket.SHUT_WR)
-    client_socket.close()
-    activate_connection = False
+    #client_socket.shutdown(socket.SHUT_WR)
+    #client_socket.close()
+    #activate_connection = False

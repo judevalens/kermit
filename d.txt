@@ -1,0 +1,75 @@
+SWEN-250 Document Analysis Journal
+
+Implement these functions in the order below.
+
+Your name:
+
+================================================================
+create_node
+Start
+Estimated Time	1H 30M
+Plan:
+(Order of implementation, testing approach, etc.)
+Initialize node struct , then word_entry struct, allocoate enough space for the passed string.
+Run unit test and fix bugs incrementally
+Complete
+Actual Time	3H 30M
+Observations:
+(Lessons learned, problems encountered, obstacles overcome, etc.)
+to store a struct you need to allocate memory to the pointer
+could not se word_count to 1
+passed all unit tests
+
+================================================================
+add_node_at_head
+Start
+Estimated Time	1H 0M
+Plan:
+(Order of implementation, testing approach, etc.)
+
+Complete
+Actual Time	HH MM
+Observations:
+(Lessons learned, problems encountered, obstacles overcome, etc.)
+
+
+================================================================
+clear_linked_list
+Start
+Estimated Time	HH MM
+Plan:
+(Order of implementation, testing approach, etc.)
+
+Complete
+Actual Time	HH MM
+Observations:
+(Lessons learned, problems encountered, obstacles overcome, etc.)
+
+
+================================================================
+add_node_after_current
+Start
+Estimated Time	HH MM
+Plan:
+(Order of implementation, testing approach, etc.)
+
+Complete
+Actual Time	HH MM
+Observations:
+(Lessons learned, problems encountered, obstacles overcome, etc.)
+
+
+================================================================
+find_word
+Start
+Estimated Time	HH MM
+Plan:
+(Order of implementation, testing approach, etc.)
+
+Complete
+Actual Time	HH MM
+Observations:
+(Lessons learned, problems encountered, obstacles overcome, etc.)
+
+
+================================================================

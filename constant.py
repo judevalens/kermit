@@ -34,6 +34,7 @@ class DATA_TYPE(Enum):
     R = "R" #Raw file data
     A = "A" #File Attributes
     F = "F" #File Header
+    Z = "Z" #EOF
 
 packet = {
     "MARK":None,
@@ -44,7 +45,6 @@ packet = {
     "CHECK":None,
     "CORRECT3": None
 }
-
 
 params = {
     "MAXL": None,
@@ -59,3 +59,8 @@ params = {
     "RPT": None,
     "CAPAS": None
         }
+
+file_info = {
+    'file_name':None,
+    'file_size': None
+}
