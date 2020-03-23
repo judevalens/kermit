@@ -8,12 +8,8 @@ kermit = KermitProtocol.KermitProtocol(0,serversocket)
 
 packet =  KermitPacket.KermitPacket(0,"d.txt");
 
+while kermit.is_active:
+    data = serversocket.recv(kermit.params["MAXL"])
 
-active  = True
-
-while active:
-    data = serversocket.recv(1024)
-    print("pass")
-    print(data.decode('utf-8'))
     kermit.receiver(data)
 

@@ -43,7 +43,7 @@ packet = {
     "TYPE": None,
     "DATA":None,
     "CHECK":None,
-    "CORRECT3": None
+    "CORRECT": None
 }
 
 params = {

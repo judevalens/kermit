@@ -4,14 +4,15 @@ import socket as s
 from typing import NewType
 import KermitPacket
 import constant
-
+import time
 
 class KermitProtocol:
 
-    def __init__(self, _type, socket, MAXL=80, TIME=5, NPAD=0, PADC=0, EOL=13, QCTL='#', QBIN=' ', CHKT=1, RPT=0, CAPAS=0):
+    def __init__(self, _type, socket, MAXL=64000, TIME=5, NPAD=0, PADC=0, EOL=13, QCTL='#', QBIN=' ', CHKT=1, RPT=0, CAPAS=0):
         """
         create Send-Init packet on the first transaction
         """
+        self.start = time.perf_counter()
         self.params = {
             "MAXL": MAXL,
             "TIME": TIME,
@@ -47,11 +48,13 @@ class KermitProtocol:
             self.current_state = constant.SENDSTATE.S
             self.s_transit()
 
+        self.is_active = True
+
         # build a state table
 
     def build_state(self, type):
         if type == 1:
-            print("SENDER")
+            #print("SENDER")
             self.states = {
                 constant.SENDSTATE.S: (constant.SENDSTATE.S, constant.SENDSTATE.SF),
                 constant.SENDSTATE.SF: (constant.SENDSTATE.SF, constant.SENDSTATE.SD),
@@ -61,7 +64,7 @@ class KermitProtocol:
                     constant.SENDSTATE.SB, constant.SENDSTATE.C)
             }
         else:
-            print("RECEIVER")
+            #print("RECEIVER")
             self.states = {
                 constant.RECEIVESTATE.R: (constant.RECEIVESTATE.R, constant.RECEIVESTATE.RF),
                 constant.RECEIVESTATE.RF: (constant.RECEIVESTATE.RF, constant.RECEIVESTATE.RD),
@@ -81,26 +84,27 @@ class KermitProtocol:
             packet = self.kermit_packet.get_packet(
                 constant.PACKET_TYPE.D.name, self.kermit_packet.chunk_file(constant.PACKET_TYPE.D.name))
             if packet == -1:
-                print("=============END OF FILE")
+                #print("=============END OF FILE 1=============")
                 self.state_input = 2
                 self.s_transit()
-                return
+                return ""
         if self.current_state == constant.SENDSTATE.SZ:
+            #print("=============END OF FILE 2=============")
             packet = self.kermit_packet.get_packet(
                 constant.PACKET_TYPE.Z.name, "")
         if self.current_state == constant.SENDSTATE.SB:
-            print("SHUTDOWN")
-            self.socket.shutdown()
+            #print("SHUTDOWN")
+            packet = self.kermit_packet.get_packet(
+                constant.PACKET_TYPE.B.name, "")
+            self.socket.sendall(packet.encode())
+            self.socket.shutdown(s.SHUT_RDWR)
             self.socket.close()
+            self.is_active = False
+            #print("DURATION")
+            print(self.start-time.perf_counter())
             return
-        print("SENDING " + packet)
+        ##print("SENDING " + packet)
         self.socket.sendall(packet.encode())
-
-    def r_transit(self):
-        self.current_state = self.states[self.current_state][self.state_input]
-
-        if self.current_state == constant.RECEIVESTATE.R:
-            pass
 
     def ack_receiver(self: object, ack: str) -> None:
         """
@@ -110,35 +114,37 @@ class KermitProtocol:
 
             ack (str): represents a packet.
         """
-        print("ACK")
+        #print("ACK")
         self.state_input = 0
         packet = self.kermit_packet.parse_packet(ack)
-        print(packet)
+        #print(packet)
 
         if packet["CORRECT"] == True:
             if packet["TYPE"] == constant.PACKET_TYPE.S.name:
                 self.params = self.kermit_packet.parse_data(
                     packet["TYPE"], packet["DATA"])
                 self.state_input = 1
-                print("PARAM")
-                print(str(self.params))
+                #print("PARAM")
+                #print(str(self.params))
             elif packet["TYPE"] == constant.PACKET_TYPE.Y.name:
-                print("PARAM Y ACK")
+                #print("PARAM Y ACK")
                 self.state_input = 1
             else:
                 self.state_input = 0
-        print("P LAST")
+        #print("P LAST")
         self.s_transit()
 
     def receiver(self, _packet):
-        print("PACKET RECEIVED")
-        print(_packet)
+        #print("PACKET RECEIVED")
+        ##print(_packet)
         packet = self.kermit_packet.parse_packet(_packet)
-       
+        #print("--------------------PACKET--------------------")
+        ##print(packet)
         if packet["CORRECT"] == True:
             self.state_input = 1
             if packet["TYPE"] == constant.PACKET_TYPE.S.name:
-                packet_data = self.kermit_packet.parse_data(packet["TYPE"], packet["DATA"])
+                packet_data = self.kermit_packet.parse_data(
+                    packet["TYPE"], packet["DATA"])
                 # I should be comparing the data and adjust them them | going to use the defaut params instead :) i will fix that
                 r_packet = self.kermit_packet.get_packet(
                     constant.PACKET_TYPE.S.name, self.send_init_params)
@@ -147,10 +153,15 @@ class KermitProtocol:
             elif packet["TYPE"] == constant.PACKET_TYPE.F.name:
                 self.kermit_packet.write_file(packet["TYPE"], packet["DATA"])
             elif packet["TYPE"] == constant.PACKET_TYPE.D.name:
-                self.kermit_packet.write_file(packet["TYPE"], packet["DATA"].encode())
+                self.kermit_packet.write_file(
+                    packet["TYPE"], packet["DATA"].encode())
             elif packet["TYPE"] == constant.PACKET_TYPE.Z.name:
                 self.kermit_packet.write_file(packet["TYPE"], -1)
-
+            elif packet["TYPE"] == constant.PACKET_TYPE.B.name:
+                self.socket.shutdown(s.SHUT_RDWR)
+                self.socket.close()
+                self.is_active = False
+                return
         else:
             self.state_input = 0
 

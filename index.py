@@ -13,15 +13,12 @@ print("address " + str(address) +"\n")
 
 activate_connection = True
 kermit = KermitProtocol.KermitProtocol(1,client_socket)
-kermit.open_file("d.txt")
+kermit.open_file("k.pdf")
 count  = 0;
-
-while activate_connection:
-    print("BUFF SIZE\n")
-    print(kermit.params["MAXL"])
-    data = client_socket.recv(1024)
+print(kermit.params["MAXL"])
+while kermit.is_active:
+    data = client_socket.recv(kermit.params["MAXL"])
     kermit.ack_receiver(data)
-    print(data)
     #count += 1;
     #str_to_send = "packet # " + str(count) +"\n"
     #byte = str_to_send.encode();
