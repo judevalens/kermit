@@ -8,10 +8,14 @@ import time
 
 class KermitProtocol:
 
-    def __init__(self, _type, socket, MAXL=64000, TIME=5, NPAD=0, PADC=0, EOL=13, QCTL='#', QBIN=' ', CHKT=1, RPT=0, CAPAS=0):
+    def __init__(self, _type, socket, MAXL=1024, TIME=5, NPAD=0, PADC=0, EOL=13, QCTL='#', QBIN=' ', CHKT=1, RPT=0, CAPAS="10100"):
         """
         create Send-Init packet on the first transaction
         """
+
+        #bit-masking
+        CAPAS = int(CAPAS,2)
+
         self.start = time.perf_counter()
         self.params = {
             "MAXL": MAXL,
@@ -96,7 +100,7 @@ class KermitProtocol:
             #print("SHUTDOWN")
             packet = self.kermit_packet.get_packet(
                 constant.PACKET_TYPE.B.name, "")
-            self.socket.sendall(packet.encode())
+            self.socket.sendall(packet)
             self.socket.shutdown(s.SHUT_RDWR)
             self.socket.close()
             self.is_active = False
@@ -104,7 +108,7 @@ class KermitProtocol:
             print(self.start-time.perf_counter())
             return
         ##print("SENDING " + packet)
-        self.socket.sendall(packet.encode())
+        self.socket.sendall(packet)
 
     def ack_receiver(self: object, ack: str) -> None:
         """
@@ -148,7 +152,7 @@ class KermitProtocol:
                 # I should be comparing the data and adjust them them | going to use the defaut params instead :) i will fix that
                 r_packet = self.kermit_packet.get_packet(
                     constant.PACKET_TYPE.S.name, self.send_init_params)
-                self.socket.sendall(r_packet.encode())
+                self.socket.sendall(r_packet)
                 return
             elif packet["TYPE"] == constant.PACKET_TYPE.F.name:
                 self.kermit_packet.write_file(packet["TYPE"], packet["DATA"])
@@ -169,7 +173,7 @@ class KermitProtocol:
         if self.state_input == 0:
             packet_type = constant.PACKET_TYPE.N.name
         ack_packet = self.kermit_packet.get_packet(packet_type, "")
-        self.socket.sendall(ack_packet.encode())
+        self.socket.sendall(ack_packet)
 
     def tochar(self, n):
         if isinstance(n, int) == True:

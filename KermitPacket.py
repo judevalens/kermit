@@ -24,20 +24,25 @@ class KermitPacket:
         if (self.k_protocol.state_input != 0) or (self.packet == None):
             self.packet_number += 1
 
-            packet['MARK'] = self.tochar(self.ctl(1)).encode()
-            packet["SEQ"] = self.tochar((self.packet_number % 64)).encode()
-            packet["TYPE"] = packet_type.encode()
-            packet["DATA"] = data
-
-            packet["LEN"] = 0
-
-            self.packet = str(self.tochar(self.ctl(1)))
-
             if isinstance(data, bytes):
-                ##print("BASE 64")
-                ###print(data)
                 data = data.decode()
-                ###print(data)
+                pass
+
+            packet['MARK'] = self.tochar(self.ctl(1))
+            packet["SEQ"] = self.tochar((self.packet_number % 64))
+            packet["TYPE"] = packet_type
+            packet["DATA"] = data
+            packet["LEN"] = self.tochar(len(packet["SEQ"])+len(packet["TYPE"])+len(packet["DATA"])+1)
+            packet["CHECK"] = self.tochar(self.check_sum(packet["LEN"]+packet["SEQ"]+packet["TYPE"]+packet["DATA"]))
+            self.packet = ""
+            for f in packet:
+                if isinstance(packet[f], str):
+                    self.packet += packet[f]
+
+            self.packet = self.packet.encode()
+
+            """
+            self.packet = str(self.tochar(self.ctl(1)))
             middle_packet = self.tochar(
                 (self.packet_number % 64)) + (str(packet_type)) + data
 
@@ -53,6 +58,7 @@ class KermitPacket:
             ##print("PACKET LEN")
             ##print(self.packet)
             ##print(len(self.packet))
+            """
         return self.packet
 
     def parse_packet(self, _packet: bytes):
